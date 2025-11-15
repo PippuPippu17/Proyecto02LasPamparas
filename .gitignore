@@ -1,0 +1,33 @@
+# Archivos compilados y temporales
+*.class
+*.pyc
+*.pyo
+__pycache__/
+*.o
+*.out
+*.exe
+
+# Directorios de dependencias
+node_modules/
+venv/
+env/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+.eclipse/
+
+# Archivos de construcción
+build/
+dist/
+target/
+*.jar
+*.war
