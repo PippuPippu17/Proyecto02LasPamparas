@@ -1,0 +1,58 @@
+@startuml Diagrama_09_GUI_Actualizar_Clima_Async
+title SECUENCIA 9: GUI - ACTUALIZAR CLIMA (Asíncrono)
+skinparam backgroundColor #FEFEFE
+
+actor Usuario
+participant "VentanaPrincipal" as GUI
+participant "JLabel\nlabelClima" as Label
+participant "SwingWorker\n<<Async>>" as Worker
+participant "ServicioClima" as Clima
+
+Usuario -> GUI: Click botón\n"Actualizar Clima"
+
+activate GUI
+
+GUI -> Label: setText("☁️ Consultando API del clima...")
+activate Label
+Label --> GUI: void
+deactivate Label
+
+GUI -> Worker: new SwingWorker<ClimaInfo, Void>()
+activate Worker
+
+== Thread Separado (Background) ==
+
+Worker -> Worker: doInBackground()
+note right: NO bloquea Event Dispatch Thread
+
+Worker -> Clima: obtenerClimaInfo()
+activate Clima
+
+Clima -> Clima: Verificar caché o consultar API
+note right: Puede tardar varios segundos
+
+Clima --> Worker: ClimaInfo resultado
+deactivate Clima
+
+== Thread de UI (Event Dispatch Thread) ==
+
+Worker -> Worker: done()
+Worker -> Worker: ClimaInfo resultado = get()
+
+Worker -> Label: setText(resultado.toSimpleString())
+activate Label
+
+note right
+☁️ Partly cloudy - 21°C | 23% | En vivo (14:30:00)
+end note
+
+Label --> Worker: void
+deactivate Label
+
+Worker --> GUI: void
+deactivate Worker
+
+GUI --> Usuario: Actualiza label con clima
+deactivate GUI
+
+@enduml

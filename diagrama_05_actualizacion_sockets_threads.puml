@@ -1,0 +1,101 @@
+@startuml Diagrama_05_Actualizacion_Sockets_Threads
+title SECUENCIA 5: ACTUALIZACIÓN AUTOMÁTICA CON SOCKETS Y THREADS
+skinparam backgroundColor #FEFEFE
+
+participant "ActualizadorEstados\n<<Thread>>" as Actualizador
+participant "GestorPuestos" as Gestor
+participant "PuestoComida" as Puesto
+participant "EstadoPuesto\n<<State>>" as Estado
+participant "AlmacenPuestos" as Almacen
+participant "ServidorNotificaciones" as Servidor
+participant "ClienteNotificaciones\n<<Thread>>" as Cliente
+
+== Ejecución Periódica del Thread ==
+
+activate Actualizador
+
+loop while ejecutando
+    Actualizador -> Actualizador: Thread.sleep(60000)
+    note right: Espera 60 segundos
+
+    Actualizador -> Actualizador: LocalTime horaActual = LocalTime.now()
+
+    Actualizador -> Gestor: actualizarEstados(horaActual)
+    activate Gestor
+
+    loop Para cada PuestoComida
+        Gestor -> Puesto: actualizarEstadoPorHora(horaActual)
+        activate Puesto
+
+        == Patrón State ==
+
+        Puesto -> Puesto: Determinar estado según hora
+
+        alt hora dentro del horario
+            Puesto -> Estado: new EstadoAbierto()
+            activate Estado
+        else hora entre 15:00-16:00
+            Puesto -> Estado: new EstadoEnDescanso()
+        else fuera del horario
+            Puesto -> Estado: new EstadoCerrado()
+        end
+
+        Puesto -> Puesto: if (estadoActual != nuevoEstado)
+
+        alt Estado cambió
+            Puesto -> Puesto: cambiarEstado(nuevoEstado)
+            Puesto -> Puesto: notificar(observadores)
+            note right: Patrón Observer activado
+        end
+
+        Puesto --> Gestor: void
+        deactivate Puesto
+        deactivate Estado
+    end
+
+    Gestor -> Almacen: guardarPuestos(puestos)
+    activate Almacen
+
+    Almacen -> Almacen: synchronized(lock)
+    Almacen -> Almacen: BufferedWriter(data/puestos.txt)
+
+    loop Para cada puesto
+        Almacen -> Almacen: write(id;nombre;tipo;...)
+    end
+
+    Almacen -> Almacen: flush()
+
+    Almacen --> Gestor: void
+    deactivate Almacen
+
+    Gestor --> Actualizador: void
+    deactivate Gestor
+
+    == Notificación por Sockets ==
+
+    Actualizador -> Actualizador: String mensaje = formatear(hora)
+
+    Actualizador -> Servidor: notificarTodos(mensaje)
+    activate Servidor
+
+    Servidor -> Servidor: synchronized(clientes)
+
+    loop Para cada PrintWriter cliente
+        Servidor -> Cliente: println("[NOTIFICACION] " + mensaje)
+        activate Cliente
+
+        Cliente -> Cliente: BufferedReader.readLine()
+        Cliente -> Cliente: System.out.println(mensaje)
+
+        deactivate Cliente
+    end
+
+    Servidor --> Actualizador: void
+    deactivate Servidor
+
+    note right of Actualizador: Repetir ciclo
+end
+
+deactivate Actualizador
+
+@enduml

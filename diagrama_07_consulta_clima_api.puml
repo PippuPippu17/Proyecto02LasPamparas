@@ -1,0 +1,113 @@
+@startuml Diagrama_07_Consulta_Clima_API
+title SECUENCIA 7: CONSULTA DEL CLIMA (API Externa)
+skinparam backgroundColor #FEFEFE
+
+actor Usuario
+participant "Vista" as Vista
+participant "ServicioClima" as Clima
+participant "HttpURLConnection" as HTTP
+participant "wttr.in\n<<API>>" as API
+
+Usuario -> Vista: Opción 9:\nVer clima
+
+activate Vista
+
+Vista -> Clima: obtenerClimaInfo()
+activate Clima
+
+== Verificación de Caché ==
+
+Clima -> Clima: verificar caché
+
+alt Caché válido (< 15 minutos)
+    Clima -> Clima: cacheHits++
+    Clima --> Vista: ClimaInfo (fromCache=true)
+    note right: No consulta API
+else Caché expirado o no existe
+
+    == Consulta a API Externa ==
+
+    Clima -> Clima: totalRequests++
+    Clima -> Clima: apiCalls++
+
+    Clima -> HTTP: new URI("https://wttr.in/Mexico_City?format=j1")
+    activate HTTP
+
+    Clima -> HTTP: openConnection()
+    Clima -> HTTP: setRequestMethod("GET")
+    Clima -> HTTP: setConnectTimeout(5000)
+    Clima -> HTTP: setReadTimeout(5000)
+
+    HTTP -> API: GET /Mexico_City?format=j1
+    activate API
+
+    API --> HTTP: 200 OK\n{\n  "current_condition": [...],\n  "weather": [...]\n}
+    deactivate API
+
+    HTTP --> Clima: InputStream
+    deactivate HTTP
+
+    == Parseo de JSON ==
+
+    Clima -> Clima: BufferedReader.readLine()
+    Clima -> Clima: parseJson(json, regex_temperatura)
+    note right: "\"temp_C\"\\s*:\\s*\"([^\"]+)\""
+
+    Clima -> Clima: parseJson(json, regex_humedad)
+    note right: "\"humidity\"\\s*:\\s*\"([^\"]+)\""
+
+    Clima -> Clima: parseJson(json, regex_viento)
+    Clima -> Clima: parseJson(json, regex_precipitacion)
+    Clima -> Clima: parseJson(json, regex_descripcion)
+
+    == Generación de Recomendación ==
+
+    Clima -> Clima: generarRecomendacion(descripcion, temp, humedad)
+
+    alt descripcion.contains("rain")
+        Clima -> Clima: return "Visita puestos techados en Media Luna"
+    else temperatura > 28°C
+        Clima -> Clima: return "Prueba bebidas frías y helados"
+    else temperatura < 15°C
+        Clima -> Clima: return "Perfecto para pozole o atole caliente"
+    else descripcion.contains("sun")
+        Clima -> Clima: return "Disfruta al aire libre en Estacionamiento"
+    else humedad > 70%
+        Clima -> Clima: return "Mantente hidratado"
+    else
+        Clima -> Clima: return "Clima estable - Explora los antojitos"
+    end
+
+    == Actualización de Caché ==
+
+    Clima -> Clima: cachedClima = new ClimaInfo(...)
+    Clima -> Clima: lastFetchTime = LocalDateTime.now()
+
+    Clima --> Vista: ClimaInfo (fromCache=false)
+end
+
+deactivate Clima
+
+Vista -> Vista: System.out.println(climaInfo.toString())
+
+note right
+╔══════════════════════════════════════╗
+║  🌤️  CLIMA EN CIUDAD DE MÉXICO 🌤️   ║
+╠══════════════════════════════════════╣
+║ Condición:     Partly cloudy        ║
+║ Temperatura:   21°C                 ║
+║ Sensación:     21°C                 ║
+║ Humedad:       23%                  ║
+║ Viento:        9 km/h               ║
+║ Precipitación: 0.0 mm               ║
+╠══════════════════════════════════════╣
+║ 💡 Clima estable - Explora los...  ║
+╠══════════════════════════════════════╣
+║ Actualizado: 14:30:00    [EN VIVO] ║
+╚══════════════════════════════════════╝
+end note
+
+Vista --> Usuario: Muestra información del clima
+deactivate Vista
+
+@enduml

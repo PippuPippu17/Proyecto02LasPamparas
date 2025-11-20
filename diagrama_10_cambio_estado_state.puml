@@ -1,0 +1,114 @@
+@startuml Diagrama_10_Cambio_Estado_State
+title SECUENCIA 10: CAMBIO DE ESTADO CON PATRÓN STATE
+skinparam backgroundColor #FEFEFE
+
+participant "PuestoComida" as Puesto
+participant "EstadoPuesto\n<<Interface>>" as IEstado
+participant "EstadoAbierto" as Abierto
+participant "EstadoCerrado" as Cerrado
+participant "EstadoEnDescanso" as Descanso
+participant "Observador" as Obs
+
+== Actualización por Hora ==
+
+-> Puesto: actualizarEstadoPorHora(LocalTime hora)
+activate Puesto
+
+Puesto -> Puesto: horaApertura = 08:00\nhoraCierre = 18:00
+
+alt hora.isAfter(08:00) && hora.isBefore(18:00)
+
+    Puesto -> Puesto: ¿Ya está abierto?
+
+    alt estadoActual != EstadoAbierto
+        Puesto -> Abierto: new EstadoAbierto()
+        activate Abierto
+        Puesto -> Puesto: cambiarEstado(nuevoEstado)
+
+        Puesto -> Puesto: notificar("El puesto ahora está: Abierto")
+
+        loop Para cada observador
+            Puesto -> Obs: actualizar(this, notificacion)
+            activate Obs
+            Obs --> Puesto: void
+            deactivate Obs
+        end
+
+        deactivate Abierto
+    end
+
+else hora.isAfter(15:00) && hora.isBefore(16:00)
+
+    alt estadoActual != EstadoEnDescanso
+        Puesto -> Descanso: new EstadoEnDescanso()
+        activate Descanso
+        Puesto -> Puesto: cambiarEstado(nuevoEstado)
+        Puesto -> Puesto: notificar("El puesto ahora está: En descanso")
+
+        loop Para cada observador
+            Puesto -> Obs: actualizar(this, notificacion)
+            activate Obs
+            Obs --> Puesto: void
+            deactivate Obs
+        end
+
+        deactivate Descanso
+    end
+
+else fuera de horario
+
+    alt estadoActual != EstadoCerrado
+        Puesto -> Cerrado: new EstadoCerrado()
+        activate Cerrado
+        Puesto -> Puesto: cambiarEstado(nuevoEstado)
+        Puesto -> Puesto: notificar("El puesto ahora está: Cerrado")
+
+        loop Para cada observador
+            Puesto -> Obs: actualizar(this, notificacion)
+            activate Obs
+            Obs --> Puesto: void
+            deactivate Obs
+        end
+
+        deactivate Cerrado
+    end
+end
+
+<-- Puesto: void
+deactivate Puesto
+
+== Verificación de Disponibilidad ==
+
+-> Puesto: getEstado().disponibilidad(hora)
+activate Puesto
+
+Puesto -> IEstado: disponibilidad(hora)
+activate IEstado
+
+alt Estado es Abierto
+    IEstado -> Abierto: disponibilidad(hora)
+    activate Abierto
+    Abierto --> IEstado: true
+    deactivate Abierto
+
+else Estado es Cerrado
+    IEstado -> Cerrado: disponibilidad(hora)
+    activate Cerrado
+    Cerrado --> IEstado: false
+    deactivate Cerrado
+
+else Estado es En Descanso
+    IEstado -> Descanso: disponibilidad(hora)
+    activate Descanso
+    Descanso -> Descanso: !(hora.isAfter(15:00) &&\n hora.isBefore(16:00))
+    Descanso --> IEstado: boolean
+    deactivate Descanso
+end
+
+IEstado --> Puesto: disponible
+deactivate IEstado
+
+<-- Puesto: disponible
+deactivate Puesto
+
+@enduml

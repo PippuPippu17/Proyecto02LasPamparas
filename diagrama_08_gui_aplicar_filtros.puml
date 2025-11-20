@@ -1,0 +1,73 @@
+@startuml Diagrama_08_GUI_Aplicar_Filtros
+title SECUENCIA 8: GUI - APLICAR FILTROS
+skinparam backgroundColor #FEFEFE
+
+actor Usuario
+participant "VentanaPrincipal" as GUI
+participant "JComboBox\nFiltroTipo" as ComboTipo
+participant "ControladorPuestos" as Ctrl
+participant "GestorPuestos" as Gestor
+participant "RecomendacionTipo\n<<Strategy>>" as Strategy
+participant "DefaultTableModel" as Tabla
+
+Usuario -> GUI: Click botón "Aplicar"
+
+activate GUI
+
+GUI -> ComboTipo: getSelectedItem()
+activate ComboTipo
+ComboTipo --> GUI: "Comida Rapida"
+deactivate ComboTipo
+
+alt Filtro por tipo != "Todos"
+
+    GUI -> Strategy: new RecomendacionTipo("Comida Rapida")
+    activate Strategy
+    Strategy --> GUI: estrategia
+    deactivate Strategy
+
+    GUI -> Ctrl: getGestor()
+    activate Ctrl
+    Ctrl --> GUI: gestor
+    deactivate Ctrl
+
+    GUI -> Gestor: recomendar(estrategia)
+    activate Gestor
+
+    Gestor -> Strategy: recomendar(puestos)
+    activate Strategy
+    Strategy --> Gestor: List<PuestoComida> filtrados
+    deactivate Strategy
+
+    Gestor --> GUI: resultado
+    deactivate Gestor
+
+    GUI -> GUI: actualizarTablaConLista(resultado)
+
+    GUI -> Tabla: setRowCount(0)
+    activate Tabla
+    Tabla --> GUI: void
+    deactivate Tabla
+
+    loop Para cada puesto en resultado
+        GUI -> Tabla: addRow([id, nombre, tipo, ubicacion, precio, estado])
+        activate Tabla
+        Tabla --> GUI: void
+        deactivate Tabla
+    end
+
+else Filtro por ubicación
+    note right: Similar con RecomendacionUbicacion
+
+else Filtro por precio
+    note right: Similar con RecomendacionPrecio
+
+else Sin filtros
+    GUI -> GUI: cargarDatos()
+    note right: Carga todos los puestos
+end
+
+GUI --> Usuario: Actualiza tabla con filtros
+deactivate GUI
+
+@enduml
