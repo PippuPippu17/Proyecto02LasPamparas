@@ -1,0 +1,27 @@
+# Archivos compilados de Java
+*.class
+bin/
+
+# Archivos de configuración local
+.claude/
+
+# Archivos de log
+*.log
+actividad.log
+
+# Reportes generados (se pueden regenerar)
+reporte_puestos.txt
+reporte_puestos.csv
+
+# Archivos temporales
+*.tmp
+data/*.tmp
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.iml
