@@ -2,6 +2,7 @@ package teoremadelsabor.mvc;
 
 import teoremadelsabor.persistencia.AlmacenPuestos;
 import teoremadelsabor.strategy.StrategyRecomendacion;
+import teoremadelsabor.composite.*;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -74,12 +75,75 @@ public class GestorPuestos {
 
 
   /**
-   * Aplica una estrategia de recomendacion basada en precio, tipo de comida, ubicación 
+   * Aplica una estrategia de recomendacion basada en precio, tipo de comida, ubicación
    * @param recomendacion la estrategia a usar
    * @return Puestos recomendados que cumplan la caracteristica
    */
   public List<PuestoComida> recomendar(StrategyRecomendacion recomendacion) {
-    return recomendacion.recomendar(puestos);  
+    return recomendacion.recomendar(puestos);
+  }
+
+
+  /**
+   * Crea la estructura de zonas con todos los puestos organizados
+   * @return Zona raiz con todas las zonas de la facultad
+   */
+  public Zona crearEstructuraZonas() {
+    Zona facultad = new Zona("Facultad de Ciencias");
+
+    // Crear zonas principales
+    Zona mediaLuna = new Zona("Media Luna");
+    Zona comedor = new Zona("Comedor");
+    Zona estacionamiento = new Zona("Estacionamiento");
+    Zona puestosExteriores = new Zona("Puestos Exteriores");
+    Zona edificios = new Zona("Edificios");
+
+    // Agregar puestos a cada zona segun su ubicacion
+    for (PuestoComida p : puestos) {
+      PuestoHoja hoja = new PuestoHoja(p);
+
+      switch (p.getUbicacion()) {
+        case "Media Luna":
+          mediaLuna.agregar(hoja);
+          break;
+        case "Comedor":
+          comedor.agregar(hoja);
+          break;
+        case "Estacionamiento":
+          estacionamiento.agregar(hoja);
+          break;
+        case "Puestos":
+          puestosExteriores.agregar(hoja);
+          break;
+        default:
+          if (p.getUbicacion().contains("Edificio")) {
+            edificios.agregar(hoja);
+          }
+          break;
+      }
+    }
+
+    // Agregar todas las zonas a la facultad
+    facultad.agregar(mediaLuna);
+    facultad.agregar(comedor);
+    facultad.agregar(estacionamiento);
+    facultad.agregar(puestosExteriores);
+    facultad.agregar(edificios);
+
+    return facultad;
+  }
+
+
+  /**
+   * Busca un puesto por su ID
+   * @param id ID del puesto a buscar
+   * @return PuestoComida si existe, null si no
+   */
+  public PuestoComida buscarPorId(String id) {
+    return puestos.stream()
+      .filter(p -> p.getId().equals(id))
+      .findFirst()
+      .orElse(null);
   }
 }
 

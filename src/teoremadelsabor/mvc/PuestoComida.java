@@ -1,9 +1,11 @@
 package teoremadelsabor.mvc;
 
 import teoremadelsabor.observer.Observador;
+import teoremadelsabor.observer.Sujeto;
 import teoremadelsabor.state.EstadoPuesto;
 import teoremadelsabor.state.EstadoAbierto;
 import teoremadelsabor.state.EstadoCerrado;
+import teoremadelsabor.state.EstadoEnDescanso;
 
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -13,9 +15,10 @@ import java.util.Arrays;
 
 /**
  * Clase que representa un puesto de comida
- * Implementa State y Observer
+ * Implementa el patron State para gestionar estados (Abierto/Cerrado/EnDescanso)
+ * Implementa el patron Observer como Sujeto que notifica cambios a observadores
  */
-public class PuestoComida {
+public class PuestoComida implements Sujeto {
 
   private String id;
   private String nombre;
@@ -164,16 +167,30 @@ public class PuestoComida {
 
 
   /**
-   * Suscribe un observador 
+   * Suscribe un observador
    * @param obs Observador (cliente) a suscribir al puesto
    */
   public void suscribir(Observador obs) {
-    observadores.add(obs);
+    if (!observadores.contains(obs)) {
+      observadores.add(obs);
+      System.out.println(obs + " se ha suscrito a " + nombre);
+    }
   }
 
 
-  /** 
-   * Notifica a bservadores
+  /**
+   * Desuscribe un observador
+   * @param obs Observador a desuscribir del puesto
+   */
+  public void desuscribir(Observador obs) {
+    if (observadores.remove(obs)) {
+      System.out.println(obs + " se ha desuscrito de " + nombre);
+    }
+  }
+
+
+  /**
+   * Notifica a observadores
    * @param notif Notificacion (mensaje) a enviar a observador(es) suscrito(s)
    */
   public void notificar(String notif) {
@@ -183,18 +200,103 @@ public class PuestoComida {
   }
 
 
-  /** 
+  /**
    * Actualiza el estado del puesto con base en la hora
    * @param hora Hora actual de CMDX (LocalTime)
    */
   public void actualizarEstadoPorHora(LocalTime hora) {
-    boolean abierto = hora.isAfter(horaApertura) && hora.isBefore(horaCierre);
-    if (abierto && !(estado instanceof EstadoAbierto)) {
-      estado = new EstadoAbierto();
-      notificar("El puesto esta abierto");
-    } else if (!abierto && !(estado instanceof EstadoCerrado)) {
+    EstadoPuesto estadoAnterior = estado;
+
+    // Verificar si esta fuera del horario de operacion
+    if (hora.isBefore(horaApertura) || hora.isAfter(horaCierre)) {
       estado = new EstadoCerrado();
-      notificar("El puesto esta cerrado");
+    }
+    // Verificar si esta en horario de descanso (15:00 - 16:00)
+    else if (hora.isAfter(LocalTime.of(15, 0)) && hora.isBefore(LocalTime.of(16, 0))) {
+      estado = new EstadoEnDescanso();
+    }
+    // Esta en horario de operacion normal
+    else {
+      estado = new EstadoAbierto();
+    }
+
+    // Notificar solo si el estado cambio
+    if (!estado.getClass().equals(estadoAnterior.getClass())) {
+      notificar("El puesto ahora esta: " + estado.getNombre());
+    }
+  }
+
+
+  /**
+   * Cambia manualmente el estado del puesto
+   * @param nuevoEstado El nuevo estado a asignar
+   */
+  public void cambiarEstado(EstadoPuesto nuevoEstado) {
+    if (!estado.getClass().equals(nuevoEstado.getClass())) {
+      estado = nuevoEstado;
+      notificar("El puesto cambio a: " + estado.getNombre());
+    }
+  }
+
+
+  /**
+   * Pone el puesto en descanso temporalmente
+   */
+  public void irADescanso() {
+    cambiarEstado(new EstadoEnDescanso());
+  }
+
+
+  /**
+   * Abre el puesto manualmente
+   */
+  public void abrir() {
+    cambiarEstado(new EstadoAbierto());
+  }
+
+
+  /**
+   * Cierra el puesto manualmente
+   */
+  public void cerrar() {
+    cambiarEstado(new EstadoCerrado());
+  }
+
+
+  /**
+   * Actualiza el precio promedio del puesto y notifica a los observadores
+   * @param nuevoPrecio Nuevo precio promedio
+   */
+  public void actualizarPrecio(double nuevoPrecio) {
+    if (this.precioPromedio != nuevoPrecio) {
+      double precioAnterior = this.precioPromedio;
+      this.precioPromedio = nuevoPrecio;
+      notificar("Precio actualizado de $" + precioAnterior + " a $" + nuevoPrecio);
+    }
+  }
+
+
+  /**
+   * Actualiza el tipo de comida (menu) y notifica a los observadores
+   * @param nuevoTipo Nuevo tipo de comida
+   */
+  public void actualizarMenu(String nuevoTipo) {
+    if (!this.tipo.equals(nuevoTipo)) {
+      String tipoAnterior = this.tipo;
+      this.tipo = nuevoTipo;
+      notificar("Menu actualizado de '" + tipoAnterior + "' a '" + nuevoTipo + "'");
+    }
+  }
+
+
+  /**
+   * Actualiza los metodos de pago y notifica a los observadores
+   * @param nuevosMetodos Nuevos metodos de pago
+   */
+  public void actualizarMetodosPago(String nuevosMetodos) {
+    if (!this.metodoPago.equals(nuevosMetodos)) {
+      this.metodoPago = nuevosMetodos;
+      notificar("Metodos de pago actualizados a: " + nuevosMetodos);
     }
   }
 }

@@ -16,13 +16,27 @@ public class Usuario implements Observador {
     this.nombre = nombre;
   }
 
-  /** 
-   * {@inheritDoc} 
+  /**
+   * Obtiene el nombre del usuario
+   * @return Nombre del usuario
+   */
+  public String getNombre() {
+    return nombre;
+  }
+
+  /**
+   * {@inheritDoc}
    */
   @Override
   public void actualizar(PuestoComida puesto, String notificacion) {
-    System.out.println("Notificación para " + nombre + ": El puesto " +
-    puesto.getNombre() + " ha cambiado de estado a " + notificacion + ".");
+    System.out.println("\n[NOTIFICACION] Para: " + nombre);
+    System.out.println("  Puesto: " + puesto.getNombre());
+    System.out.println("  Evento: " + notificacion);
+  }
+
+  @Override
+  public String toString() {
+    return nombre;
   }
 }
 

@@ -1,11 +1,26 @@
 package teoremadelsabor.observer;
 
 /**
- * Interfaz del patrón Observer.
- * Define las operaciones del sujeto observable.
+ * Interfaz Sujeto del patron Observer
+ * Define las operaciones para gestionar observadores
  */
 public interface Sujeto {
-    void suscribir(Observador o);
-    void notificar(String evento);
-}
 
+  /**
+   * Suscribe un observador al sujeto
+   * @param obs Observador a suscribir
+   */
+  void suscribir(Observador obs);
+
+  /**
+   * Desuscribe un observador del sujeto
+   * @param obs Observador a desuscribir
+   */
+  void desuscribir(Observador obs);
+
+  /**
+   * Notifica a todos los observadores suscritos
+   * @param notificacion Mensaje de notificacion
+   */
+  void notificar(String notificacion);
+}
