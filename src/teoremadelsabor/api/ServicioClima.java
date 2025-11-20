@@ -119,6 +119,23 @@ public class ServicioClima {
         }
 
         /**
+         * Versión simplificada para GUI (sin caracteres especiales).
+         */
+        public String toSimpleString() {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+            String cache = fromCache ? "Cache" : "En vivo";
+
+            return String.format(
+                "\u2601\uFE0F %s - %s | %s | %s (%s)",
+                descripcion,
+                temperatura,
+                humedad,
+                cache,
+                horaConsulta.format(formatter)
+            );
+        }
+
+        /**
          * Retorna una versión compacta de la información climática.
          */
         public String toStringCompact() {

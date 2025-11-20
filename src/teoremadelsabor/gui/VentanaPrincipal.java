@@ -640,7 +640,7 @@ public class VentanaPrincipal extends JFrame {
       protected void done() {
         try {
           ServicioClima.ClimaInfo resultado = get();
-          labelClima.setText(resultado.toString());
+          labelClima.setText(resultado.toSimpleString());
         } catch (Exception e) {
           labelClima.setText("\u2601\uFE0F Clima no disponible. Revisa la conexión.");
           e.printStackTrace();
