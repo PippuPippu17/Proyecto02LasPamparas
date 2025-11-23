@@ -20,6 +20,3 @@
 20;Tienda Fondo;Snacks y Dulces;Comedor;20.00;08:00;19:00;Efectivo
 21;Tienda Inicio;Snacks;Comedor;30.00;07:00;21:30;Efectivo
 22;Cafetería;Comida Completa;Comedor;38.00;07:00;20:00;Efectivo
-23;Quesadillas Doña Mary;Quesadillas;Media Luna;38.00;08:00;17:00;Efectivo
-24;Pozole La Tradición;Pozole;Estacionamiento;65.00;10:00;20:00;Efectivo|Tarjeta
-25;Tortas Ahogadas;Tortas;Estacionamiento;50.00;09:00;19:00;Efectivo|Tarjeta

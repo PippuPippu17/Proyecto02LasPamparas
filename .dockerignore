@@ -1,0 +1,19 @@
+# Directorios de compilación
+bin/
+*.class
+
+# Archivos temporales
+*.tmp
+.tmp
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.iml
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

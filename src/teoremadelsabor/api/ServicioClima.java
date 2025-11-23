@@ -144,10 +144,10 @@ public class ServicioClima {
     }
 
     // Configuración de la API
-    private static final String URL_API = "https://wttr.in/Mexico_City?format=j1";
+    private static final String URL_API = "https://api.open-meteo.com/v1/forecast?latitude=19.42&longitude=-99.13&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=America%2FMexico_City";
     private static final long CACHE_DURATION_MINUTES = 15;
-    private static final int CONNECT_TIMEOUT_MS = 5000;
-    private static final int READ_TIMEOUT_MS = 5000;
+    private static final int CONNECT_TIMEOUT_MS = 10000;
+    private static final int READ_TIMEOUT_MS = 10000;
 
     // Variables de caché
     private static ClimaInfo cachedClima = null;
@@ -224,24 +224,24 @@ public class ServicioClima {
                 LOGGER.log(Level.FINE, "Respuesta JSON recibida (primeros 100 chars): {0}",
                     json.substring(0, Math.min(100, json.length())));
 
-                // Parsear todos los campos del JSON desde current_condition
-                String descripcion = parseJson(json, "\"weatherDesc\"\\s*:\\s*\\[\\s*\\{\\s*\"value\"\\s*:\\s*\"([^\"]+)\"");
-                String temperatura = parseJson(json, "\"temp_C\"\\s*:\\s*\"([^\"]+)\"");
-                String sensacionTermica = parseJson(json, "\"FeelsLikeC\"\\s*:\\s*\"([^\"]+)\"");
-                String humedad = parseJson(json, "\"humidity\"\\s*:\\s*\"([^\"]+)\"");
-                String viento = parseJson(json, "\"windspeedKmph\"\\s*:\\s*\"([^\"]+)\"");
-                String precipitacion = parseJson(json, "\"precipMM\"\\s*:\\s*\"([^\"]+)\"");
+                // Parsear campos del JSON de Open-Meteo
+                String temperatura = parseJson(json, "\"temperature_2m\"\\s*:\\s*([0-9.]+)");
+                String humedad = parseJson(json, "\"relative_humidity_2m\"\\s*:\\s*([0-9]+)");
+                String viento = parseJson(json, "\"wind_speed_10m\"\\s*:\\s*([0-9.]+)");
+                String weatherCode = parseJson(json, "\"weather_code\"\\s*:\\s*([0-9]+)");
 
-                if (descripcion != null && temperatura != null) {
+                String descripcion = obtenerDescripcionClima(weatherCode);
+
+                if (temperatura != null) {
                     String recomendacion = generarRecomendacion(descripcion, temperatura, humedad);
 
                     cachedClima = new ClimaInfo(
                         descripcion,
                         temperatura + "°C",
-                        (sensacionTermica != null ? sensacionTermica + "°C" : "N/A"),
+                        temperatura + "°C",
                         (humedad != null ? humedad + "%" : "N/A"),
                         (viento != null ? viento + " km/h" : "N/A"),
-                        (precipitacion != null ? precipitacion + " mm" : "N/A"),
+                        "0 mm",
                         recomendacion,
                         false
                     );
@@ -404,6 +404,28 @@ public class ServicioClima {
         cachedClima = null;
         lastFetchTime = null;
         LOGGER.log(Level.INFO, "Caché limpiado manualmente");
+    }
+
+    /**
+     * Convierte el código de clima de Open-Meteo a descripción legible
+     *
+     * @param code Código del clima
+     * @return Descripción del clima
+     */
+    private static String obtenerDescripcionClima(String code) {
+        if (code == null) return "Desconocido";
+
+        switch (code) {
+            case "0": return "Despejado";
+            case "1": case "2": case "3": return "Parcialmente nublado";
+            case "45": case "48": return "Neblina";
+            case "51": case "53": case "55": return "Llovizna";
+            case "61": case "63": case "65": return "Lluvia";
+            case "71": case "73": case "75": return "Nieve";
+            case "80": case "81": case "82": return "Chubascos";
+            case "95": case "96": case "99": return "Tormenta";
+            default: return "Nublado";
+        }
     }
 
     /**

@@ -34,8 +34,10 @@ public class VentanaPrincipal extends JFrame {
   private JTextArea areaDetalles;
   private JLabel labelClima;
   private JComboBox<String> comboFiltroTipo;
+  private JComboBox<String> comboFiltroTipo2;
   private JComboBox<String> comboFiltroUbicacion;
   private JTextField txtFiltroPrecio;
+  private Timer timerClima;
 
   /**
    * Constructor de la ventana principal
@@ -52,6 +54,16 @@ public class VentanaPrincipal extends JFrame {
     inicializarComponentes();
     cargarDatos();
     actualizarClima();
+    iniciarActualizacionClimaAutomatica();
+  }
+
+  /**
+   * Inicia un timer que actualiza el clima cada 5 minutos
+   */
+  private void iniciarActualizacionClimaAutomatica() {
+    // Actualizar cada 5 minutos (300000 ms)
+    timerClima = new Timer(300000, e -> actualizarClima());
+    timerClima.start();
   }
 
   /**
@@ -213,20 +225,18 @@ public class VentanaPrincipal extends JFrame {
    * Crea el panel lateral con detalles y acciones
    */
   private JPanel crearPanelLateral() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    JPanel panel = new JPanel(new BorderLayout(0, 15));
     panel.setPreferredSize(new Dimension(400, 0));
     panel.setBackground(COLOR_FONDO);
+    panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
 
-    // Panel de detalles
+    // Panel de detalles (ocupa todo el espacio disponible)
     JPanel panelDetalles = crearPanelDetalles();
-    panel.add(panelDetalles);
+    panel.add(panelDetalles, BorderLayout.CENTER);
 
-    panel.add(Box.createRigidArea(new Dimension(0, 15)));
-
-    // Panel de acciones
+    // Panel de acciones (parte inferior)
     JPanel panelAcciones = crearPanelAcciones();
-    panel.add(panelAcciones);
+    panel.add(panelAcciones, BorderLayout.SOUTH);
 
     return panel;
   }
@@ -241,25 +251,26 @@ public class VentanaPrincipal extends JFrame {
       BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
       BorderFactory.createEmptyBorder(15, 15, 15, 15)
     ));
-    panel.setMaximumSize(new Dimension(400, 400));
 
     JLabel titulo = new JLabel("\uD83D\uDCCC Detalles del Puesto");
-    titulo.setFont(new Font("Dialog", Font.BOLD, 16));
+    titulo.setFont(new Font("Dialog", Font.BOLD, 18));
     titulo.setForeground(COLOR_TEXTO);
+    titulo.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
     panel.add(titulo, BorderLayout.NORTH);
 
     areaDetalles = new JTextArea();
     areaDetalles.setEditable(false);
-    areaDetalles.setFont(new Font("Dialog", Font.PLAIN, 13));
+    areaDetalles.setFont(new Font("Dialog", Font.PLAIN, 14));
     areaDetalles.setLineWrap(true);
     areaDetalles.setWrapStyleWord(true);
-    areaDetalles.setMargin(new Insets(10, 10, 10, 10));
+    areaDetalles.setMargin(new Insets(15, 15, 15, 15));
     areaDetalles.setBackground(new Color(250, 250, 250));
     areaDetalles.setForeground(COLOR_TEXTO);
     areaDetalles.setText("Selecciona un puesto de la tabla\npara ver sus detalles...");
 
     JScrollPane scrollDetalles = new JScrollPane(areaDetalles);
     scrollDetalles.setBorder(BorderFactory.createLineBorder(new Color(230, 230, 230), 1));
+    scrollDetalles.setPreferredSize(new Dimension(0, 300));
     panel.add(scrollDetalles, BorderLayout.CENTER);
 
     return panel;
@@ -274,9 +285,8 @@ public class VentanaPrincipal extends JFrame {
     panel.setBackground(COLOR_BLANCO);
     panel.setBorder(BorderFactory.createCompoundBorder(
       BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-      BorderFactory.createEmptyBorder(15, 15, 15, 15)
+      BorderFactory.createEmptyBorder(12, 15, 12, 15)
     ));
-    panel.setMaximumSize(new Dimension(400, 500));
 
     JLabel titulo = new JLabel("\u26A1 Acciones Rápidas");
     titulo.setFont(new Font("Dialog", Font.BOLD, 16));
@@ -364,13 +374,20 @@ public class VentanaPrincipal extends JFrame {
     labelFiltros.setForeground(COLOR_TEXTO);
     panel.add(labelFiltros);
 
-    // Filtro por tipo
+    // Filtro por tipo (permite 2 selecciones)
     panel.add(new JLabel("Tipo:"));
     comboFiltroTipo = new JComboBox<>(new String[]{
-      "Todos", "Comida Completa", "Comida Rapida", "Tacos", "Snacks", "Postres"
+      "Todos", "Comida Completa", "Comida Rapida", "Tacos", "Snacks", "Postres", "Golosinas", "Asiatica", "Snacks y Dulces"
     });
     comboFiltroTipo.setFont(new Font("Segoe UI", Font.PLAIN, 12));
     panel.add(comboFiltroTipo);
+
+    panel.add(new JLabel("Tipo 2:"));
+    comboFiltroTipo2 = new JComboBox<>(new String[]{
+      "Ninguno", "Comida Completa", "Comida Rapida", "Tacos", "Snacks", "Postres", "Golosinas", "Asiatica", "Snacks y Dulces"
+    });
+    comboFiltroTipo2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+    panel.add(comboFiltroTipo2);
 
     // Filtro por ubicacion
     panel.add(new JLabel("Ubicación:"));
@@ -394,6 +411,7 @@ public class VentanaPrincipal extends JFrame {
     JButton btnLimpiar = crearBotonFiltro("Limpiar", new Color(149, 165, 166));
     btnLimpiar.addActionListener(e -> {
       comboFiltroTipo.setSelectedIndex(0);
+      comboFiltroTipo2.setSelectedIndex(0);
       comboFiltroUbicacion.setSelectedIndex(0);
       txtFiltroPrecio.setText("");
       cargarDatos();
@@ -445,7 +463,7 @@ public class VentanaPrincipal extends JFrame {
         puesto.getTipo(),
         puesto.getUbicacion(),
         String.format("$%.1f", puesto.getPrecioPromedio()),
-        puesto.getEstado().toString()
+        puesto.getEstado().getNombre()
       };
       modeloTabla.addRow(fila);
     }
@@ -470,7 +488,7 @@ public class VentanaPrincipal extends JFrame {
         sb.append("\uD83D\uDD50 Horario: ").append(puesto.getHoraApertura())
           .append(" - ").append(puesto.getHoraCierre()).append("\n");
         sb.append("\uD83D\uDCB3 Pago: ").append(puesto.getMetodosPago()).append("\n");
-        sb.append("\uD83D\uDD34 Estado: ").append(puesto.getEstado().toString()).append("\n");
+        sb.append("\uD83D\uDD34 Estado: ").append(puesto.getEstado().getNombre()).append("\n");
 
         areaDetalles.setText(sb.toString());
       }
@@ -482,30 +500,42 @@ public class VentanaPrincipal extends JFrame {
    */
   private void aplicarFiltros() {
     String tipo = (String) comboFiltroTipo.getSelectedItem();
+    String tipo2 = (String) comboFiltroTipo2.getSelectedItem();
     String ubicacion = (String) comboFiltroUbicacion.getSelectedItem();
     String precioTexto = txtFiltroPrecio.getText().trim();
 
+    // Empezar con todos los puestos
+    List<PuestoComida> filtrados = controlador.getGestor().getPuestos();
+
+    // Aplicar filtro por tipo (permite 2 tipos con OR)
+    java.util.List<String> tiposSeleccionados = new java.util.ArrayList<>();
     if (!tipo.equals("Todos")) {
-      List<PuestoComida> filtrados = controlador.getGestor()
-        .recomendar(new RecomendacionTipo(tipo));
-      actualizarTablaConLista(filtrados);
-      return;
+      tiposSeleccionados.add(tipo);
+    }
+    if (!tipo2.equals("Ninguno")) {
+      tiposSeleccionados.add(tipo2);
     }
 
+    if (!tiposSeleccionados.isEmpty()) {
+      filtrados = filtrados.stream()
+        .filter(p -> tiposSeleccionados.contains(p.getTipo()))
+        .toList();
+    }
+
+    // Aplicar filtro por ubicación
     if (!ubicacion.equals("Todas")) {
-      List<PuestoComida> filtrados = controlador.getGestor()
-        .recomendar(new RecomendacionUbicacion(ubicacion));
-      actualizarTablaConLista(filtrados);
-      return;
+      filtrados = filtrados.stream()
+        .filter(p -> p.getUbicacion().equals(ubicacion))
+        .toList();
     }
 
+    // Aplicar filtro por precio
     if (!precioTexto.isEmpty()) {
       try {
         double precio = Double.parseDouble(precioTexto);
-        List<PuestoComida> filtrados = controlador.getGestor()
-          .recomendar(new RecomendacionPrecio(precio));
-        actualizarTablaConLista(filtrados);
-        return;
+        filtrados = filtrados.stream()
+          .filter(p -> p.getPrecioPromedio() <= precio)
+          .toList();
       } catch (NumberFormatException e) {
         JOptionPane.showMessageDialog(
           this,
@@ -513,10 +543,11 @@ public class VentanaPrincipal extends JFrame {
           "Error",
           JOptionPane.ERROR_MESSAGE
         );
+        return;
       }
     }
 
-    cargarDatos();
+    actualizarTablaConLista(filtrados);
   }
 
   /**
@@ -531,7 +562,7 @@ public class VentanaPrincipal extends JFrame {
         puesto.getTipo(),
         puesto.getUbicacion(),
         String.format("$%.1f", puesto.getPrecioPromedio()),
-        puesto.getEstado().toString()
+        puesto.getEstado().getNombre()
       };
       modeloTabla.addRow(fila);
     }

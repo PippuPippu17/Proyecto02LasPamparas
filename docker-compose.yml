@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  teorema-del-sabor:
+    build: .
+    image: teorema-del-sabor:latest
+    container_name: teorema-del-sabor-app
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./data:/app/data
+    ports:
+      - "8080:8080"
+    network_mode: host
+    stdin_open: true
+    tty: true
